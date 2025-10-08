@@ -47,16 +47,16 @@
   },
   "prettier": "@shahrad/prettier-config",
   "devDependencies": {
-    "@shahrad/eslint-config": "^1.0.0",
+    "@shahrad/eslint-config": "^1.0.1",
     "@shahrad/prettier-config": "^1.2.2",
     "@shahrad/tsconfig": "^1.2.0",
-    "@types/node": "^24.3.0",
-    "eslint": "^9.34.0",
-    "globals": "^16.3.0",
+    "@types/node": "^24.7.0",
+    "eslint": "^9.37.0",
+    "globals": "^16.4.0",
     "prettier": "^3.6.2",
     "tsup": "^8.5.0",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
   "packageManager": "pnpm@10.15.0"
