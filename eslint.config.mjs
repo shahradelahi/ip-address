@@ -3,7 +3,7 @@ import globals from 'globals';
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'scripts/**'],
+    ignores: ['dist/**'],
   },
 
   {
