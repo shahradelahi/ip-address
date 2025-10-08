@@ -59,7 +59,6 @@ describe('CIDR', () => {
     });
 
     it('should throw on invalid CIDR', () => {
-      expect(() => new CIDR('192.168.1.1')).toThrow(InvalidIPAddressError);
       expect(() => new CIDR('192.168.1.1/33')).toThrow(InvalidIPAddressError);
       expect(() => new CIDR('192.168.1.1/foo')).toThrow(InvalidIPAddressError);
       expect(() => new CIDR('256.0.0.0/24')).toThrow(InvalidIPAddressError);
@@ -109,10 +108,25 @@ describe('CIDR', () => {
     });
 
     it('should throw on invalid CIDR', () => {
-      expect(() => new CIDR('2001:db8::1')).toThrow(InvalidIPAddressError);
       expect(() => new CIDR('2001:db8::1/129')).toThrow(InvalidIPAddressError);
       expect(() => new CIDR('2001:db8::1/foo')).toThrow(InvalidIPAddressError);
       expect(() => new CIDR('2001::g/64')).toThrow(InvalidIPAddressError);
+    });
+  });
+
+  describe('from single IP', () => {
+    it('should handle a single IPv4 address as a /32', () => {
+      const cidr = new CIDR('192.168.1.1');
+      expect(cidr.prefix).toBe(32);
+      expect(cidr.address.address).toBe('192.168.1.1');
+      expect(cidr.toString()).toBe('192.168.1.1/32');
+    });
+
+    it('should handle a single IPv6 address as a /128', () => {
+      const cidr = new CIDR('2001:db8::1');
+      expect(cidr.prefix).toBe(128);
+      expect(cidr.address.address).toBe('2001:db8::1');
+      expect(cidr.toString()).toBe('2001:db8::1/128');
     });
   });
 });

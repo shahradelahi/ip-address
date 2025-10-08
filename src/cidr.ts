@@ -22,15 +22,9 @@ export class CIDR<T extends IP> {
    * @throws {InvalidIPAddressError} If the CIDR string is invalid.
    */
   constructor(cidr: string) {
-    const [addressPart, prefixPart] = cidr.split('/');
-    if (!prefixPart) {
-      throw new InvalidIPAddressError(`Invalid CIDR notation: ${cidr}`);
-    }
-
-    const prefix = parseInt(prefixPart, 10);
-    if (isNaN(prefix)) {
-      throw new InvalidIPAddressError(`Invalid prefix: ${prefixPart}`);
-    }
+    const parts = cidr.split('/');
+    const addressPart = parts[0];
+    let prefixPart = parts[1];
 
     let address: IP;
     let version: IPVersion;
@@ -41,6 +35,15 @@ export class CIDR<T extends IP> {
     } else {
       address = new IPv6(addressPart);
       version = 6;
+    }
+
+    if (prefixPart === undefined) {
+      prefixPart = String(BITS[version]);
+    }
+
+    const prefix = parseInt(prefixPart, 10);
+    if (isNaN(prefix)) {
+      throw new InvalidIPAddressError(`Invalid prefix: ${prefixPart}`);
     }
 
     if (prefix < 0 || prefix > BITS[version]) {
