@@ -41,3 +41,23 @@ export function parseIP(address: string): IP {
 export function parseCIDR(cidr: string): CIDR<IP> {
   return new CIDR(cidr);
 }
+
+/**
+ * Safely checks if a value is a string representing a valid IPv4 or IPv6 address.
+ *
+ * @param maybeIP The value to check.
+ * @returns {boolean} True if the value is a valid IP address string.
+ *
+ * @example
+ * isValidIP('192.168.1.1');      // true
+ * isValidIP('2001:db8::1');      // true
+ * isValidIP('not an ip');        // false
+ * isValidIP(null);               // false
+ */
+export function isValidIP(maybeIP: unknown): boolean {
+  if (typeof maybeIP !== 'string') {
+    return false;
+  }
+
+  return IPv4.isValid(maybeIP) || IPv6.isValid(maybeIP);
+}

@@ -64,9 +64,6 @@ export class IPv4 {
    * IPv4.isValid('1.2.3.256'); // false
    */
   static isValid(address: string): boolean {
-    if (address.includes('/')) {
-      return false;
-    }
     return IPV4_ADDRESS_REGEX.test(address);
   }
 

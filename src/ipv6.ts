@@ -70,9 +70,6 @@ export class IPv6 {
    * IPv6.isValid('2001:db8::g'); // false
    */
   static isValid(address: string): boolean {
-    if (address.includes('/')) {
-      return false;
-    }
     return IPV6_VALIDATION_REGEX.test(address);
   }
 
