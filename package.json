@@ -34,7 +34,8 @@
   ],
   "scripts": {
     "bench": "vitest bench --run",
-    "build": "pnpm typecheck && tsup",
+    "build": "tsup",
+    "ci:publish": "changeset publish",
     "clean": "git clean -dfx node_modules dist .tsbuildinfo",
     "dev": "tsup --watch",
     "format": "prettier --write .",
@@ -47,6 +48,7 @@
   },
   "prettier": "@shahrad/prettier-config",
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@shahrad/eslint-config": "^1.0.1",
     "@shahrad/prettier-config": "^1.2.2",
     "@shahrad/tsconfig": "^1.2.0",
