@@ -127,7 +127,44 @@ describe('IPv6', () => {
 
     it('should correctly identify an IPv4-mapped address', () => {
       expect(new IPv6('::ffff:192.168.1.1').isIPv4Mapped()).toBe(true);
-      expect(() => new IPv6('::fffe:1.2.3.4')).toThrow(InvalidIPAddressError);
+      expect(new IPv6('::fffe:1.2.3.4').isIPv4Mapped()).toBe(false);
+    });
+
+    it('should not shorten a single 0 group', () => {
+      expect(new IPv6('2001:db8:0:1:1:1:1:1').address).toBe('2001:db8:0:1:1:1:1:1');
+    });
+
+    it('should choose leftmost zero run on ties', () => {
+      expect(new IPv6('2001:db8:0:0:1:0:0:1').address).toBe('2001:db8::1:0:0:1');
+    });
+
+    it('should correctly compute expandedAddress and toArpa on IPv4-mapped addresses', () => {
+      const mapped = new IPv6('::ffff:192.168.1.1');
+      expect(mapped.expandedAddress).toBe('0000:0000:0000:0000:0000:ffff:c0a8:0101');
+      expect(mapped.toArpa()).toBe(
+        '1.0.1.0.8.a.0.c.f.f.f.f.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa'
+      );
+    });
+
+    it('should validate and parse dotted-quad IPv6 consistently', () => {
+      expect(IPv6.isValid('::FFFF:192.168.1.1')).toBe(true);
+      expect(new IPv6('::FFFF:192.168.1.1').address).toBe('::ffff:192.168.1.1');
+      expect(new IPv6('::FFFF:192.168.1.1').isIPv4Mapped()).toBe(true);
+
+      expect(IPv6.isValid('0:0:0:0:0:ffff:192.168.1.1')).toBe(true);
+      expect(new IPv6('0:0:0:0:0:ffff:192.168.1.1').address).toBe('::ffff:192.168.1.1');
+
+      expect(IPv6.isValid('::1.2.3.4')).toBe(true);
+      expect(new IPv6('::1.2.3.4').address).toBe('::102:304');
+
+      expect(IPv6.isValid('64:ff9b::192.0.2.33')).toBe(true);
+      expect(new IPv6('64:ff9b::192.0.2.33').address).toBe('64:ff9b::c000:221');
+
+      expect(IPv6.isValid('64:ff9b:::192.0.2.33')).toBe(false);
+      expect(() => new IPv6('64:ff9b:::192.0.2.33')).toThrow(InvalidIPAddressError);
+
+      expect(IPv6.isValid('1:2:3:4:5::6:1.2.3.4')).toBe(false);
+      expect(() => new IPv6('1:2:3:4:5::6:1.2.3.4')).toThrow(InvalidIPAddressError);
     });
 
     it('should correctly identify a reserved address', () => {

@@ -1,3 +1,4 @@
+import { IPV4_ADDRESS_REGEX, IPV6_VALIDATION_REGEX } from './constants';
 import { InvalidIPAddressError } from './errors';
 import type { IPVersion } from './typings';
 
@@ -8,11 +9,11 @@ import type { IPVersion } from './typings';
  * @throws {InvalidIPAddressError} If the string is not recognizable as an IP address.
  */
 export function fastIpVersion(probablyIp: string): IPVersion {
-  if (probablyIp.includes('.')) {
-    return 4;
-  }
   if (probablyIp.includes(':')) {
     return 6;
+  }
+  if (probablyIp.includes('.')) {
+    return 4;
   }
   throw new InvalidIPAddressError(`Invalid IP address: ${probablyIp}`);
 }
@@ -24,10 +25,10 @@ export function fastIpVersion(probablyIp: string): IPVersion {
  * @internal
  */
 function ipv4ToBigInt(ip: string): bigint {
-  const parts = ip.split('.');
-  if (parts.length !== 4 || parts.some((part) => !/^\d+$/.test(part) || Number(part) > 255)) {
+  if (!IPV4_ADDRESS_REGEX.test(ip)) {
     throw new InvalidIPAddressError(`Invalid IPv4 address: ${ip}`);
   }
+  const parts = ip.split('.');
   return parts.reduce((acc, octet) => (acc << 8n) | BigInt(parseInt(octet, 10)), 0n);
 }
 
@@ -53,31 +54,32 @@ function expandIPv6Shorthand(parts: string[]): string[] {
  * @internal
  */
 function ipv6ToBigInt(ip: string): bigint {
-  if (ip.includes('%')) {
-    ip = /(.+)%(.+)/.exec(ip)![1];
+  const percentIndex = ip.indexOf('%');
+  if (percentIndex !== -1) {
+    if (percentIndex === 0 || percentIndex === ip.length - 1) {
+      throw new InvalidIPAddressError(`Invalid IPv6 address: ${ip}`);
+    }
+    ip = ip.slice(0, percentIndex);
   }
 
-  const ipv4MappedMatch = /^(::ffff:)(?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))$/.exec(ip);
-  if (ipv4MappedMatch) {
-    const ipv4Part = ipv4MappedMatch[2];
-    const ipv4BigInt = ipv4ToBigInt(ipv4Part);
-    return (0x00000000000000000000ffffn << 32n) | ipv4BigInt;
-  }
-
-  let parts = ip.split(':');
-  parts = expandIPv6Shorthand(parts);
-
-  if (parts.length !== 8 || parts.some((part) => !/^[0-9a-fA-F]*$/.test(part) || part.length > 4)) {
+  if (!IPV6_VALIDATION_REGEX.test(ip)) {
     throw new InvalidIPAddressError(`Invalid IPv6 address: ${ip}`);
   }
 
-  let number = 0n;
-  let exp = 0n;
+  if (ip.includes('.')) {
+    const lastColon = ip.lastIndexOf(':');
+    const prefix = ip.slice(0, lastColon + 1);
+    const ipv4BigInt = ipv4ToBigInt(ip.slice(lastColon + 1));
+    const high = ((ipv4BigInt >> 16n) & 0xffffn).toString(16);
+    const low = (ipv4BigInt & 0xffffn).toString(16);
+    ip = `${prefix}${high}:${low}`;
+  }
 
-  const r = parts.map((part) => (part === '' ? 0n : BigInt(Number.parseInt(part, 16)))).reverse();
-  for (const n of r) {
-    number += n * 2n ** exp;
-    exp += 16n;
+  const parts = expandIPv6Shorthand(ip.split(':'));
+
+  let number = 0n;
+  for (const part of parts) {
+    number = (number << 16n) | (part === '' ? 0n : BigInt(Number.parseInt(part, 16)));
   }
 
   return number;
@@ -115,7 +117,7 @@ export function bigIntToIp(number: bigint, version: IPVersion, compress = true):
   }
 
   // Check for IPv4-mapped address (::ffff:a.b.c.d)
-  if (number >> 32n === 0xffffn) {
+  if (compress && number >> 32n === 0xffffn) {
     const ipv4Part = number & 0xffffffffn;
     const ipv4String = bigIntToIp(ipv4Part, 4);
     return `::ffff:${ipv4String}`;
@@ -142,27 +144,34 @@ export function bigIntToIp(number: bigint, version: IPVersion, compress = true):
  * @internal
  */
 function compressIPv6(parts: string[]): string {
-  let longest: Set<number> | null = null;
-  let current: Set<number> | null = null;
-  for (let i = 0, len = parts.length; i < len; i++) {
-    const part = parts[i];
-    if (part === '0') {
-      current ??= new Set();
-      current.add(i);
-    } else if (current) {
-      if (!longest || current.size > longest.size) {
-        longest = current;
+  let bestStart = -1;
+  let bestLen = 0;
+  let curStart = -1;
+  let curLen = 0;
+
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i] === '0') {
+      if (curStart === -1) {
+        curStart = i;
+        curLen = 1;
+      } else {
+        curLen++;
       }
-      current = null;
+      if (curLen > bestLen) {
+        bestStart = curStart;
+        bestLen = curLen;
+      }
+    } else {
+      curStart = -1;
+      curLen = 0;
     }
   }
-  if ((!longest && current) || (current && longest && current.size > longest.size)) {
-    longest = current;
+
+  if (bestLen < 2) {
+    return parts.join(':');
   }
 
-  for (const index of longest || []) {
-    parts[index] = ':';
-  }
-
-  return parts.filter(Boolean).join(':').replace(/:{2,}/, '::');
+  const before = parts.slice(0, bestStart).join(':');
+  const after = parts.slice(bestStart + bestLen).join(':');
+  return `${before}::${after}`;
 }

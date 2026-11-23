@@ -21,11 +21,11 @@ export type * from './typings';
  * @throws {InvalidIPAddressError} if the address is not a valid v4 or v6 address.
  */
 export function parseIP(address: string): IP {
-  if (address.includes('.')) {
-    return new IPv4(address);
-  }
   if (address.includes(':')) {
     return new IPv6(address);
+  }
+  if (address.includes('.')) {
+    return new IPv4(address);
   }
   throw new InvalidIPAddressError(`Invalid IP address: ${address}`);
 }

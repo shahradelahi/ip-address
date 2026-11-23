@@ -28,7 +28,17 @@ const IPV6_COMPRESSED_7 = `(?:${IPV6_SEGMENT}:){1,2}(?::${IPV6_SEGMENT}){1,5}`;
 const IPV6_COMPRESSED_8 = `${IPV6_SEGMENT}:(?::${IPV6_SEGMENT}){1,6}`;
 const IPV6_COMPRESSED_9 = `::(?:${IPV6_SEGMENT}:){0,5}${IPV6_SEGMENT}`;
 const IPV6_COMPRESSED_10 = '::';
-const IPV6_IPV4_MAPPED = `(?:(?:${IPV6_SEGMENT}:){6}|::(?:${IPV6_SEGMENT}:){0,5}|(?:${IPV6_SEGMENT}:){0,5}::(?:${IPV6_SEGMENT}:){0,5})${IPV4_ADDRESS_PATTERN}`;
+const IPV6_IPV4_MAPPED = [
+  `(?:${IPV6_SEGMENT}:){6}`,
+  `::(?:${IPV6_SEGMENT}:){0,5}`,
+  `(?:${IPV6_SEGMENT}:){1}:(?:${IPV6_SEGMENT}:){0,4}`,
+  `(?:${IPV6_SEGMENT}:){2}:(?:${IPV6_SEGMENT}:){0,3}`,
+  `(?:${IPV6_SEGMENT}:){3}:(?:${IPV6_SEGMENT}:){0,2}`,
+  `(?:${IPV6_SEGMENT}:){4}:(?:${IPV6_SEGMENT}:){0,1}`,
+  `(?:${IPV6_SEGMENT}:){5}:`,
+]
+  .map((prefix) => `${prefix}${IPV4_ADDRESS_PATTERN}`)
+  .join('|');
 
 const IPV6_COMBINED = [
   IPV6_STANDARD,

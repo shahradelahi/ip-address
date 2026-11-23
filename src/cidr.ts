@@ -23,29 +23,34 @@ export class CIDR<T extends IP> {
    */
   constructor(cidr: string) {
     const parts = cidr.split('/');
+    if (parts.length > 2) {
+      throw new InvalidIPAddressError(`Invalid CIDR: ${cidr}`);
+    }
     const addressPart = parts[0];
     let prefixPart = parts[1];
 
     let address: IP;
     let version: IPVersion;
 
-    if (addressPart.includes('.')) {
+    if (addressPart.includes(':')) {
+      address = new IPv6(addressPart);
+      version = 6;
+    } else if (addressPart.includes('.')) {
       address = new IPv4(addressPart);
       version = 4;
     } else {
-      address = new IPv6(addressPart);
-      version = 6;
+      throw new InvalidIPAddressError(`Invalid IP address: ${addressPart}`);
     }
 
     if (prefixPart === undefined) {
       prefixPart = String(BITS[version]);
     }
 
-    const prefix = parseInt(prefixPart, 10);
-    if (isNaN(prefix)) {
+    if (!/^\d+$/.test(prefixPart)) {
       throw new InvalidIPAddressError(`Invalid prefix: ${prefixPart}`);
     }
 
+    const prefix = Number(prefixPart);
     if (prefix < 0 || prefix > BITS[version]) {
       throw new InvalidIPAddressError(`Prefix out of range for IPv${version}: ${prefix}`);
     }
