@@ -1,5 +1,11 @@
 # @se-oss/ip-address
 
+## 1.1.2
+
+### Patch Changes
+
+- f59dd6a: Fix IPv6 single-zero group compression, IPv4-mapped expandedAddress and toArpa, and dotted-quad IPv6 parsing/validation consistency.
+
 ## 1.1.1
 
 ### Patch Changes
